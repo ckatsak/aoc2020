@@ -16,3 +16,7 @@ path = "src/lib.rs"
 [[bin]]
 name = "day01a"
 path = "day01/part1.rs"
+
+[[bin]]
+name = "day01b"
+path = "day01/part2.rs"
