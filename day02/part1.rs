@@ -39,7 +39,7 @@ fn main() -> Result<()> {
     let argv: Vec<_> = std::env::args().collect();
     let filepath = match argv.len() {
         1 => "day02/part1.txt",
-        2 => argv[2].as_ref(),
+        2 => argv[1].as_ref(),
         _ => {
             bail!(format!("Usage:\n\t$ {} [<file>]", argv[0]));
         }
