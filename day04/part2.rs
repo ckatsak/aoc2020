@@ -9,10 +9,7 @@ use anyhow::{bail, Result};
 const FIELDS: &[&str] = &["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"];
 
 fn fine_validate(passport: &HashMap<String, String>) -> bool {
-    let num_in_range = |value: &str, lower, upper| match value.parse::<u32>() {
-        Ok(num) if num >= lower && num <= upper => true,
-        _ => false,
-    };
+    let num_in_range = |value: &str, lower, upper| matches!(value.parse::<u32>(), Ok(num) if num >= lower && num <= upper);
     const ECLS: &[&str] = &["amb", "blu", "brn", "gry", "grn", "hzl", "oth"];
 
     let hgt = passport.get("hgt").unwrap();
@@ -27,7 +24,7 @@ fn fine_validate(passport: &HashMap<String, String>) -> bool {
         && hcl.starts_with('#')
         && hcl[1..]
             .chars()
-            .all(|c| (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))
+            .all(|c| ('0'..='9').contains(&c) || ('a'..='f').contains(&c))
         && ECLS.contains(&passport.get("ecl").unwrap().as_ref())
         && pid.len() == 9
         && num_in_range(pid, 0, 999_999_999)
@@ -43,7 +40,7 @@ fn solve<P: AsRef<Path>>(path: P) -> Result<usize> {
         }
         true
     };
-    let mut ret = BufReader::with_capacity(1 << 14, std::fs::File::open(path)?)
+    let ret = BufReader::with_capacity(1 << 14, std::fs::File::open(path)?)
         .lines()
         .filter(|line| {
             let line = line.as_ref().unwrap();
@@ -61,10 +58,11 @@ fn solve<P: AsRef<Path>>(path: P) -> Result<usize> {
         .count();
     // Last passport is never validated, unless the input file ends with double
     // '\n' (in which case the passport will have been cleared anyway), so:
-    if validate(&passport) && fine_validate(&passport) {
-        ret += 1
-    }
-    Ok(ret)
+    Ok(if validate(&passport) && fine_validate(&passport) {
+        ret + 1
+    } else {
+        ret
+    })
 }
 
 fn main() -> Result<()> {
