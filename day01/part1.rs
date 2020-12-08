@@ -21,7 +21,7 @@ fn two_sum(expenses: &mut Vec<u64>, target: u64) -> Result<(usize, usize)> {
             Err(j) => *j,
         }
     }
-    Err(anyhow!(format!("No solution for the 2SUM exists")))
+    Err(anyhow!("No solution for 2SUM exists"))
 }
 
 fn main() -> Result<()> {

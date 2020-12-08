@@ -8,7 +8,7 @@ use aoc2020::read_u64s;
 /// solution to the 3SUM problem and returns the indices of the resulting integers in the vector.
 ///
 /// An Error is returned if a solution for the 3SUM does not exist.
-fn three_sum(expenses: &Vec<u64>, target: u64) -> Result<(usize, usize, usize)> {
+fn three_sum(expenses: &[u64], target: u64) -> Result<(usize, usize, usize)> {
     let mut h: HashMap<u64, usize> = HashMap::with_capacity(expenses.len() * expenses.len());
     expenses.iter().enumerate().for_each(|(i, e)| {
         h.insert(*e, i);
@@ -29,7 +29,7 @@ fn three_sum(expenses: &Vec<u64>, target: u64) -> Result<(usize, usize, usize)> 
             }
         }
     }
-    Err(anyhow!(format!("No solution for 3SUM exists")))
+    Err(anyhow!("No solution for 3SUM exists"))
 }
 
 fn main() -> Result<()> {

@@ -16,7 +16,7 @@ where
                 x.parse::<u64>()
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidData, err))
             })
-            .map_err(|err| anyhow::Error::from(err))
+            .map_err(anyhow::Error::from)
             //.map_err(|err| err.into())
         })
         .collect()
