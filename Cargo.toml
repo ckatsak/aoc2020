@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 anyhow = "*"
+regex = "1"
 
 [lib]
 name = "aoc2020"
@@ -60,3 +61,7 @@ path = "day06/part1.rs"
 [[bin]]
 name = "day06b"
 path = "day06/part2.rs"
+
+[[bin]]
+name = "day07a"
+path = "day07/part1.rs"
