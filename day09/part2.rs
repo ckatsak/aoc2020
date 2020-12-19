@@ -25,6 +25,8 @@ fn two_sum(numbers: &[i64], target: i64, h: &mut HashSet<i64>) -> Result<(), i64
 /// 2SUM solution of its previous `preamble` numbers.
 ///
 /// Returns an error if such a number does not exist.
+///
+/// O((N-P)*P) ~ O(N) for P<<N
 fn find_invalid(numbers: &[i64], preamble: usize) -> Result<i64> {
     let mut h = HashSet::with_capacity(preamble);
     for (i, num) in numbers[preamble..].iter().enumerate() {
@@ -46,10 +48,7 @@ fn subslice_sum(numbers: &[i64], target: i64) -> Result<&[i64]> {
     let (mut l, mut r) = (0, 0);
     let mut running_sum = numbers[l];
     while r < numbers.len() || (l + 1 < r && running_sum < target) {
-        if r == numbers.len() {
-            running_sum -= numbers[l];
-            l += 1;
-        } else if running_sum < target {
+        if running_sum < target {
             r += 1;
             running_sum += numbers[r];
         } else {
