@@ -6,22 +6,20 @@ use anyhow::{anyhow, bail, Result};
 
 #[derive(Clone, Debug, PartialEq)]
 enum Seat {
-    Empty(usize, usize, Vec<(usize, usize)>),
-    Occupied(usize, usize, Vec<(usize, usize)>),
+    Empty(usize, usize),
+    Occupied(usize, usize),
     Floor,
 }
 
-impl std::convert::TryFrom<((usize, usize), char, (usize, usize))> for Seat {
+impl std::convert::TryFrom<((usize, usize), char)> for Seat {
     type Error = String;
 
-    fn try_from(
-        (pos, availability, dims): ((usize, usize), char, (usize, usize)),
-    ) -> Result<Self, Self::Error> {
+    fn try_from(((r, c), availability): ((usize, usize), char)) -> Result<Self, Self::Error> {
         match availability {
-            'L' => Ok(Seat::Empty(pos.0, pos.1, Seat::adjacent(pos, dims))),
-            '#' => Ok(Seat::Occupied(pos.0, pos.1, Seat::adjacent(pos, dims))),
+            'L' => Ok(Seat::Empty(r, c)),
+            '#' => Ok(Seat::Occupied(r, c)),
             '.' => Ok(Seat::Floor),
-            c => Err(format!("invalid seat: {:?} --> {:#?}", pos, c)),
+            s => Err(format!("invalid seat: {:?} --> {:#?}", (r, c), s)),
         }
     }
 }
@@ -29,8 +27,8 @@ impl std::convert::TryFrom<((usize, usize), char, (usize, usize))> for Seat {
 impl std::fmt::Display for Seat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Seat::Empty(_, _, _) => write!(f, "L"),
-            Seat::Occupied(_, _, _) => write!(f, "#"),
+            Seat::Empty(_, _) => write!(f, "L"),
+            Seat::Occupied(_, _) => write!(f, "#"),
             Seat::Floor => write!(f, "."),
         }
     }
@@ -95,16 +93,16 @@ struct Row {
     seats: Vec<Seat>,
 }
 
-impl std::convert::TryFrom<((usize, &str), (usize, usize))> for Row {
+impl std::convert::TryFrom<(usize, &str)> for Row {
     type Error = String;
 
-    fn try_from(((id, s), dims): ((usize, &str), (usize, usize))) -> Result<Self, Self::Error> {
+    fn try_from((id, s): (usize, &str)) -> Result<Self, Self::Error> {
         Ok(Row {
             id,
             seats: s
                 .chars()
                 .enumerate()
-                .map(|(col, c)| ((id, col), c, dims).try_into())
+                .map(|(col, c)| ((id, col), c).try_into())
                 .collect::<Result<Vec<Seat>, String>>()?,
         })
     }
@@ -134,45 +132,45 @@ impl std::fmt::Display for Layout {
 
 impl Layout {
     #[inline(always)]
-    fn new<II: IntoIterator<Item = String>>(lines: II, dims: (usize, usize)) -> Result<Self> {
+    fn new<II: IntoIterator<Item = String>>(lines: II) -> Result<Self> {
         Ok(Layout(
             lines
                 .into_iter()
                 .enumerate()
-                .map(|(i, line)| ((i, line.as_ref()), dims).try_into())
+                .map(|(i, line)| (i, line.as_ref()).try_into())
                 .collect::<Result<Vec<Row>, String>>()
                 .map_err(|err| anyhow!("parsing input: {}", err))?,
         ))
     }
 
-    #[inline]
     fn step(&self) -> Self {
-        const EMPTY_ENOUGH: usize = 0;
-        const CROWDY_ENOUGH: usize = 4;
+        const EMPTY: usize = 0;
+        const CROWDY: usize = 4;
 
-        let order = |adj: &[(usize, usize)]| {
-            adj.iter()
+        let order = |pos| {
+            Seat::adjacent(pos, (self.0.len(), self.0.get(0).unwrap().seats.len()))
+                .iter()
                 .filter(|(ar, ac)| {
                     matches!(
                         self.0.get(*ar).unwrap().seats.get(*ac).unwrap(),
-                        Seat::Occupied(_, _, _)
+                        Seat::Occupied(_, _)
                     )
                 })
                 .count()
         };
 
-        // FIXME: O(A*N) && too many allocations happenning here!
+        // TODO: Non-optimal: the order of each Seat will be calculated once per adjacent ~ O(A*N).
         let mut next = self.clone();
         next.0.iter_mut().for_each(|row| {
             row.seats.iter_mut().for_each(|seat| match seat {
-                Seat::Empty(r, c, adj) => {
-                    if order(&adj) == EMPTY_ENOUGH {
-                        *seat = Seat::Occupied(*r, *c, adj.clone())
+                Seat::Empty(r, c) => {
+                    if order((*r, *c)) == EMPTY {
+                        *seat = Seat::Occupied(*r, *c)
                     }
                 }
-                Seat::Occupied(r, c, adj) => {
-                    if order(&adj) >= CROWDY_ENOUGH {
-                        *seat = Seat::Empty(*r, *c, adj.clone())
+                Seat::Occupied(r, c) => {
+                    if order((*r, *c)) >= CROWDY {
+                        *seat = Seat::Empty(*r, *c)
                     }
                 }
                 _floor => (), // skip
@@ -187,7 +185,7 @@ impl Layout {
             .map(|row| {
                 row.seats
                     .iter()
-                    .filter(|&seat| matches!(seat, Seat::Occupied(_, _, _)))
+                    .filter(|&seat| matches!(seat, Seat::Occupied(_, _)))
                     .count()
             })
             .sum()
@@ -199,8 +197,7 @@ fn solve<P: AsRef<Path>>(path: P) -> Result<usize> {
         .lines()
         .map(|l| l.unwrap())
         .collect();
-    let (nr, nc) = (input.len(), input[0].len());
-    let mut layout = Layout::new(input, (nr, nc))?;
+    let mut layout = Layout::new(input)?;
     //eprintln!("Initial Layout:\n{}", layout);
 
     loop {
