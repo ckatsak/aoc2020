@@ -63,25 +63,10 @@ mod tests {
 
     #[test]
     fn t1() -> Result<()> {
-        let mut v = vec![10, 10, 10, 10, 10, 10, 10];
-        let (i, j, k) = three_sum(&mut v, 30)?;
+        let v = vec![10, 10, 10, 10, 10, 10, 10];
+        let (i, j, k) = three_sum(&v, 30)?;
         print_result(v[i], v[j], v[k]);
         assert_eq!(v[i] + v[j] + v[k], 30);
         Ok(())
-    }
-
-    #[test]
-    fn t2() -> Result<()> {
-        let mut v = (1..10).collect();
-        match three_sum(&mut v, 30) {
-            Ok((i, j, k)) => {
-                print_result(v[i], v[j], v[k]);
-                bail!("This should return an Err!");
-            }
-            Err(e) => {
-                eprintln!("error = {:#?}", e);
-                Ok(())
-            }
-        }
     }
 }
